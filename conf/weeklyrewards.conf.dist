@@ -5,13 +5,13 @@
 [worldserver]
 
 ########################################
-# My module configuration
+# Weekly Rewards Configuration
 ########################################
 #
-#    MyModule.Enable
-#        Description: Enable my module and print "Hello World" message at server start
+#    WeeklyRewards.Enable
+#        Description: Enable/Disable the module.
 #        Default:     0 - Disabled
 #                     1 - Enabled
 #
 
-MyModule.Enable = 1
+WeeklyRewards.Enable = 0
