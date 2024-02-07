@@ -3,6 +3,7 @@
 
 #include "ScriptMgr.h"
 
+#include <unordered_map>
 #include <vector>
 
 struct WeeklyReward
@@ -18,6 +19,59 @@ struct WeeklyActivity
     uint32 Points;
 };
 
+#define sWeeklyRewards WeeklyRewardsHandler::GetInstance()
+
+class WeeklyRewardsHandler
+{
+private:
+    WeeklyRewardsHandler() { }
+
+public:
+    static WeeklyRewardsHandler* GetInstance()
+    {
+        static WeeklyRewardsHandler instance;
+
+        return &instance;
+    }
+
+public:
+    void LoadWeeklyRewards();
+    void LoadWeeklyActivity();
+    void CreatePlayerActivity(uint64 /*guid*/);
+    void SavePlayerActivity(uint64 /*guid*/);
+    WeeklyActivity* GetPlayerActivity(uint64 /*guid*/);
+    void UpdatePlayerActivity(uint64 /*guid*/, uint32 /*points*/);
+    void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
+    void FlushWeeklyRewards();
+    void ResetWeeklyActivity(uint64 /*guid*/);
+    bool CanSendWeeklyRewards();
+    void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
+
+    std::vector<WeeklyReward> WeeklyRewards;
+    std::unordered_map<uint64, WeeklyActivity> WeeklyActivities;
+};
+
+class WeeklyRewardsPlayerScript : public PlayerScript
+{
+public:
+    WeeklyRewardsPlayerScript() : PlayerScript("WeeklyRewardsPlayerScript") { }
+
+private:
+    void OnLogin(Player* /*player*/) override;
+    void OnLogout(Player* /*player*/) override;
+
+    void OnPlayerCompleteQuest(Player* /*player*/, Quest const* /*questId*/) override;
+};
+
+class WeeklyRewardsWorldScript : public WorldScript
+{
+public:
+    WeeklyRewardsWorldScript() : WorldScript("WeekyRewardsWorldScript") { }
+
+private:
+    void OnAfterConfigLoad(bool /*reload*/) override;
+};
+
 class WeeklyRewardsEventScript : public GameEventScript
 {
 public:
@@ -25,17 +79,6 @@ public:
 
 private:
     void OnStart(uint16 /*eventId*/) override;
-    void LoadWeeklyRewards();
-    void LoadWeeklyActivity();
-    void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
-    void FlushWeeklyRewards();
-    void ResetWeeklyActivity(uint64 /*guid*/);
-    bool CanSendWeeklyRewards();
-    void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
-
-private:
-    std::vector<WeeklyReward> weeklyRewards;
-    std::vector<WeeklyActivity> weeklyActivity;
 };
 
 #endif // MODULE_WEEKLY_REWARDS_H

@@ -4,6 +4,68 @@
 #include "GameTime.h"
 #include "Player.h"
 
+void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest const* questId)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID();
+    if (!guid)
+    {
+        return;
+    }
+
+    auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+    if (!activity)
+    {
+        return;
+    }
+
+    sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + 1);
+
+    player->SendSystemMessage("|cffffffffYou have earned |cff00ff001 |cffffffffactivity point for completing a quest!|r");
+}
+
+void WeeklyRewardsPlayerScript::OnLogin(Player* player)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID();
+    if (!guid)
+    {
+        return;
+    }
+
+    sWeeklyRewards->CreatePlayerActivity(guid.GetRawValue());
+}
+
+void WeeklyRewardsPlayerScript::OnLogout(Player* player)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID();
+    if (!guid)
+    {
+        return;
+    }
+
+    sWeeklyRewards->SavePlayerActivity(guid.GetRawValue());
+}
+
+void WeeklyRewardsWorldScript::OnAfterConfigLoad(bool /*reload*/)
+{
+    sWeeklyRewards->LoadWeeklyRewards();
+    sWeeklyRewards->LoadWeeklyActivity();
+}
+
 void WeeklyRewardsEventScript::OnStart(uint16 eventId)
 {
     if (eventId != 123)
@@ -18,18 +80,15 @@ void WeeklyRewardsEventScript::OnStart(uint16 eventId)
 
     sWorld->SendServerMessage(SERVER_MSG_STRING, "Flushing weekly rewards..");
 
-    LoadWeeklyRewards();
-    LoadWeeklyActivity();
-
-    if (CanSendWeeklyRewards())
+    if (sWeeklyRewards->CanSendWeeklyRewards())
     {
-        FlushWeeklyRewards();
+        sWeeklyRewards->FlushWeeklyRewards();
     }
 
     sWorld->SendServerMessage(SERVER_MSG_STRING, "Done flushing weekly rewards.");
 }
 
-void WeeklyRewardsEventScript::LoadWeeklyRewards()
+void WeeklyRewardsHandler::LoadWeeklyRewards()
 {
     LOG_INFO("module", "Loading Weekly Rewards from `character_weekly_rewards` table..");
 
@@ -41,7 +100,7 @@ void WeeklyRewardsEventScript::LoadWeeklyRewards()
         return;
     }
 
-    weeklyRewards.clear();
+    WeeklyRewards.clear();
 
     do
     {
@@ -57,14 +116,14 @@ void WeeklyRewardsEventScript::LoadWeeklyRewards()
         reward.Count = count;
         reward.MaxCount = maxCount;
 
-        weeklyRewards.push_back(reward);
+        WeeklyRewards.push_back(reward);
     }
     while (qResult->NextRow());
 
-    LOG_INFO("module", ">> Loaded '{}' weekly rewards.", weeklyRewards.size());
+    LOG_INFO("module", ">> Loaded '{}' weekly rewards.", WeeklyRewards.size());
 }
 
-void WeeklyRewardsEventScript::LoadWeeklyActivity()
+void WeeklyRewardsHandler::LoadWeeklyActivity()
 {
     LOG_INFO("module", "Loading Weekly Activity from `character_weekly_activity` table..");
 
@@ -76,7 +135,7 @@ void WeeklyRewardsEventScript::LoadWeeklyActivity()
         return;
     }
 
-    weeklyActivity.clear();
+    WeeklyActivities.clear();
 
     do
     {
@@ -90,18 +149,70 @@ void WeeklyRewardsEventScript::LoadWeeklyActivity()
         activity.Guid = guid;
         activity.Points = points;
 
-        weeklyActivity.push_back(activity);
+        WeeklyActivities.emplace(activity.Guid, activity);
     }
     while (qResult->NextRow());
 
-    LOG_INFO("module", ">> Loaded '{}' weekly activity.", weeklyActivity.size());
+    LOG_INFO("module", ">> Loaded '{}' weekly activity.", WeeklyActivities.size());
 }
 
-void WeeklyRewardsEventScript::SendWeeklyRewards(uint64 guid, uint32 points)
+void WeeklyRewardsHandler::CreatePlayerActivity(uint64 guid)
+{
+    auto it = WeeklyActivities.find(guid);
+    if (it != WeeklyActivities.end())
+    {
+        return;
+    }
+
+    WeeklyActivity activity;
+
+    activity.Guid = guid;
+    activity.Points = 0;
+
+    WeeklyActivities.emplace(guid, activity);
+}
+
+void WeeklyRewardsHandler::SavePlayerActivity(uint64 guid)
+{
+    auto it = WeeklyActivities.find(guid);
+    if (it == WeeklyActivities.end())
+    {
+        return;
+    }
+
+    auto activity = it->second;
+
+    CharacterDatabase.Execute("INSERT INTO character_weekly_activity (guid, points) VALUES ({}, {}) ON DUPLICATE KEY UPDATE points = '{}'", activity.Guid, activity.Points, activity.Points);
+}
+
+WeeklyActivity* WeeklyRewardsHandler::GetPlayerActivity(uint64 guid)
+{
+    auto it = WeeklyActivities.find(guid);
+    if (it == WeeklyActivities.end())
+    {
+        return nullptr;
+    }
+
+    return &it->second;
+}
+
+void WeeklyRewardsHandler::UpdatePlayerActivity(uint64 guid, uint32 points)
+{
+    auto it = WeeklyActivities.find(guid);
+    if (it == WeeklyActivities.end())
+    {
+        return;
+    }
+
+    auto activity = &it->second;
+    activity->Points = points;
+}
+
+void WeeklyRewardsHandler::SendWeeklyRewards(uint64 guid, uint32 points)
 {
     std::vector<std::pair<uint32, uint32>> items;
 
-    for (auto reward : weeklyRewards)
+    for (auto reward : WeeklyRewards)
     {
         auto itemProto = sObjectMgr->GetItemTemplate(reward.ItemEntry);
         if (!itemProto)
@@ -123,7 +234,7 @@ void WeeklyRewardsEventScript::SendWeeklyRewards(uint64 guid, uint32 points)
     SendMailItems(guid, items, "Weekly Reward", "You have been rewarded for weekly activity.");
 }
 
-void WeeklyRewardsEventScript::SendMailItems(uint64 guid, std::vector<std::pair<uint32, uint32>>& mailItems, std::string subject, std::string body)
+void WeeklyRewardsHandler::SendMailItems(uint64 guid, std::vector<std::pair<uint32, uint32>>& mailItems, std::string subject, std::string body)
 {
     using SendMailTempateVector = std::vector<std::pair<uint32, uint32>>;
 
@@ -201,20 +312,21 @@ void WeeklyRewardsEventScript::SendMailItems(uint64 guid, std::vector<std::pair<
     CharacterDatabase.CommitTransaction(trans);
 }
 
-void WeeklyRewardsEventScript::FlushWeeklyRewards()
+void WeeklyRewardsHandler::FlushWeeklyRewards()
 {
     LOG_INFO("module", "Flushing weekly rewards..");
 
     uint32 count = 0;
-    for (auto activity : weeklyActivity)
+    for (auto entry : WeeklyActivities)
     {
+        auto activity = entry.second;
         if (activity.Points < 1)
         {
             continue;
         }
 
-        SendWeeklyRewards(activity.Guid, activity.Points);
-        ResetWeeklyActivity(activity.Guid);
+        sWeeklyRewards->SendWeeklyRewards(activity.Guid, activity.Points);
+        sWeeklyRewards->ResetWeeklyActivity(activity.Guid);
 
         count++;
     }
@@ -222,17 +334,19 @@ void WeeklyRewardsEventScript::FlushWeeklyRewards()
     LOG_INFO("module", ">> Finished flushing '{}' weekly rewards.", count);
 }
 
-void WeeklyRewardsEventScript::ResetWeeklyActivity(uint64 guid)
+void WeeklyRewardsHandler::ResetWeeklyActivity(uint64 guid)
 {
-    CharacterDatabase.Execute("UPDATE `character_weekly_activity` SET points = 0 WHERE guid = {}", guid);
+    UpdatePlayerActivity(guid, 0);
 }
 
-bool WeeklyRewardsEventScript::CanSendWeeklyRewards()
+bool WeeklyRewardsHandler::CanSendWeeklyRewards()
 {
     return true;
 }
 
 void SC_AddWeekyRewardsScripts()
 {
+    new WeeklyRewardsWorldScript();
+    new WeeklyRewardsPlayerScript();
     new WeeklyRewardsEventScript();
 }
