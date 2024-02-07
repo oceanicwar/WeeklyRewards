@@ -2,35 +2,34 @@
 
 #include "Config.h"
 #include "GameTime.h"
+#include "Player.h"
 
-void WeeklyRewardsWorldScript::OnAfterConfigLoad(bool reload)
+void WeeklyRewardsEventScript::OnStart(uint16 eventId)
 {
+    if (eventId != 123)
+    {
+        return;
+    }
+
     if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
     {
         return;
     }
 
-    /*if (reload)
-    {
-        return;
-    }*/
+    sWorld->SendServerMessage(SERVER_MSG_STRING, "Flushing weekly rewards..");
 
     LoadWeeklyRewards();
     LoadWeeklyActivity();
 
-    for (auto activity : weeklyActivity)
+    if (CanSendWeeklyRewards())
     {
-        if (activity.Points < 1)
-        {
-            continue;
-        }
-
-        SendWeeklyRewards(activity.Guid, activity.Points);
-        ResetWeeklyActivity(activity.Guid);
+        FlushWeeklyRewards();
     }
+
+    sWorld->SendServerMessage(SERVER_MSG_STRING, "Done flushing weekly rewards.");
 }
 
-void WeeklyRewardsWorldScript::LoadWeeklyRewards()
+void WeeklyRewardsEventScript::LoadWeeklyRewards()
 {
     LOG_INFO("module", "Loading Weekly Rewards from `character_weekly_rewards` table..");
 
@@ -65,7 +64,7 @@ void WeeklyRewardsWorldScript::LoadWeeklyRewards()
     LOG_INFO("module", ">> Loaded '{}' weekly rewards.", weeklyRewards.size());
 }
 
-void WeeklyRewardsWorldScript::LoadWeeklyActivity()
+void WeeklyRewardsEventScript::LoadWeeklyActivity()
 {
     LOG_INFO("module", "Loading Weekly Activity from `character_weekly_activity` table..");
 
@@ -98,7 +97,7 @@ void WeeklyRewardsWorldScript::LoadWeeklyActivity()
     LOG_INFO("module", ">> Loaded '{}' weekly activity.", weeklyActivity.size());
 }
 
-void WeeklyRewardsWorldScript::SendWeeklyRewards(uint64 guid, uint32 points)
+void WeeklyRewardsEventScript::SendWeeklyRewards(uint64 guid, uint32 points)
 {
     std::vector<std::pair<uint32, uint32>> items;
 
@@ -124,41 +123,116 @@ void WeeklyRewardsWorldScript::SendWeeklyRewards(uint64 guid, uint32 points)
     SendMailItems(guid, items, "Weekly Reward", "You have been rewarded for weekly activity.");
 }
 
-void WeeklyRewardsWorldScript::SendMailItems(uint64 guid, std::vector<std::pair<uint32, uint32>>& mailItems, std::string subject, std::string body)
+void WeeklyRewardsEventScript::SendMailItems(uint64 guid, std::vector<std::pair<uint32, uint32>>& mailItems, std::string subject, std::string body)
 {
-    uint32 mailId = sObjectMgr->GenerateMailID();
+    using SendMailTempateVector = std::vector<std::pair<uint32, uint32>>;
 
-    uint32 sender = 7;
-    uint64 receiver = guid;
+    std::vector<SendMailTempateVector> allItems;
 
-    time_t deliveryTime = GameTime::GetGameTime().count();
-    time_t expireTime = deliveryTime + (DAY * 30);
-
-    CharacterDatabase.Execute("INSERT INTO `mail` (id, sender, receiver, subject, body, has_items, expire_time, deliver_time, money) VALUES ({}, {}, {}, '{}', '{}', {}, {}, {}, {})", mailId, sender, receiver, subject, body, true, expireTime, deliveryTime, 0);
-
-    for (auto items : mailItems)
+    auto AddMailItem = [&allItems](uint32 itemEntry, uint32 itemCount)
     {
-        auto item = Item::CreateItem(items.first, items.second);
+        SendMailTempateVector toSendItems;
 
-        if (!item)
+        ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemEntry);
+        if (!itemTemplate)
         {
-            LOG_ERROR("module", "Failed to create mail item '{}' for mail id '{}'.", items.first, mailId);
+            LOG_ERROR("module", "WeeklyRewards::SendMailItems: Item id {} is invalid", itemEntry);
+            return;
+        }
+
+        if (itemCount < 1 || (itemTemplate->MaxCount > 0 && itemCount > static_cast<uint32>(itemTemplate->MaxCount)))
+        {
+            LOG_ERROR("module", "WeeklyRewards::SendMailItems: Incorrect item count ({}) for item id {}", itemCount, itemEntry);
+            return;
+        }
+
+        while (itemCount > itemTemplate->GetMaxStackSize())
+        {
+            if (toSendItems.size() <= MAX_MAIL_ITEMS)
+            {
+                toSendItems.emplace_back(itemEntry, itemTemplate->GetMaxStackSize());
+                itemCount -= itemTemplate->GetMaxStackSize();
+            }
+            else
+            {
+                allItems.emplace_back(toSendItems);
+                toSendItems.clear();
+            }
+        }
+
+        toSendItems.emplace_back(itemEntry, itemCount);
+        allItems.emplace_back(toSendItems);
+    };
+
+    for (auto& [itemEntry, itemCount] : mailItems)
+    {
+        AddMailItem(itemEntry, itemCount);
+    }
+
+    CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+
+    MailSender sender(MAIL_CREATURE, 2442); // Cow
+    MailDraft draft(subject, body);
+
+    for (auto const& items : allItems)
+    {
+        for (auto const& [itemEntry, itemCount] : items)
+        {
+            if (Item* mailItem = Item::CreateItem(itemEntry, itemCount))
+            {
+                mailItem->SaveToDB(trans);
+                draft.AddItem(mailItem);
+            }
+        }
+    }
+
+    auto player = ObjectAccessor::FindPlayer(ObjectGuid(guid));
+
+    if (player)
+    {
+        draft.SendMailTo(trans, MailReceiver(player), sender);
+        player->SendSystemMessage("|cff00FF00You have received rewards for your weekly activity, check your mailbox!|r");
+    }
+    else
+    {
+        draft.SendMailTo(trans, MailReceiver(guid), sender);
+    }
+
+    CharacterDatabase.CommitTransaction(trans);
+}
+
+void WeeklyRewardsEventScript::FlushWeeklyRewards()
+{
+    LOG_INFO("module", "Flushing weekly rewards..");
+
+    uint32 count = 0;
+    for (auto activity : weeklyActivity)
+    {
+        if (activity.Points < 1)
+        {
             continue;
         }
 
-        auto guidLow = item->GetGUID().GetCounter();
+        SendWeeklyRewards(activity.Guid, activity.Points);
+        ResetWeeklyActivity(activity.Guid);
 
-        CharacterDatabase.Execute("INSERT INTO `item_instance` (guid, itemEntry, owner_guid, count, enchantments) VALUES ({}, {}, {}, {}, '{}')", guidLow, items.first, receiver, items.second, "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ");
-        CharacterDatabase.Execute("INSERT INTO `mail_items` (mail_id, item_guid, receiver) VALUES ({}, {}, {})", mailId, guidLow, receiver);
+        count++;
     }
+
+    LOG_INFO("module", ">> Finished flushing '{}' weekly rewards.", count);
 }
 
-void WeeklyRewardsWorldScript::ResetWeeklyActivity(uint64 guid)
+void WeeklyRewardsEventScript::ResetWeeklyActivity(uint64 guid)
 {
     CharacterDatabase.Execute("UPDATE `character_weekly_activity` SET points = 0 WHERE guid = {}", guid);
 }
 
+bool WeeklyRewardsEventScript::CanSendWeeklyRewards()
+{
+    return true;
+}
+
 void SC_AddWeekyRewardsScripts()
 {
-    new WeeklyRewardsWorldScript();
+    new WeeklyRewardsEventScript();
 }

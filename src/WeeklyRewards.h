@@ -18,19 +18,19 @@ struct WeeklyActivity
     uint32 Points;
 };
 
-class WeeklyRewardsWorldScript : public WorldScript
+class WeeklyRewardsEventScript : public GameEventScript
 {
 public:
-    WeeklyRewardsWorldScript() : WorldScript("WeeklyRewardsWorldScript") { }
-
-public:
-    void OnAfterConfigLoad(bool /*reload*/) override;
+    WeeklyRewardsEventScript() : GameEventScript("WeeklyRewardsEventScript") { }
 
 private:
+    void OnStart(uint16 /*eventId*/) override;
     void LoadWeeklyRewards();
     void LoadWeeklyActivity();
     void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
+    void FlushWeeklyRewards();
     void ResetWeeklyActivity(uint64 /*guid*/);
+    bool CanSendWeeklyRewards();
     void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
 
 private:
