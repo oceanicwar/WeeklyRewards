@@ -62,7 +62,8 @@ private:
     void OnLogin(Player* /*player*/) override;
     void OnLogout(Player* /*player*/) override;
 
-    void OnPlayerCompleteQuest(Player* /*player*/, Quest const* /*questId*/) override;
+    void OnPlayerCompleteQuest(Player* /*player*/, Quest const* /*quest*/) override;
+    void OnRewardKillRewarder(Player* /*player*/, KillRewarder* /*rewarder*/, bool /*isDungeon*/, float& /*rate*/) override;
 };
 
 class WeeklyRewardsWorldScript : public WorldScript

@@ -4,9 +4,9 @@
 #include "GameTime.h"
 #include "Player.h"
 
-void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest const* questId)
+void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest const* quest)
 {
-    if (!player)
+    if (!player || !quest)
     {
         return;
     }
@@ -23,9 +23,35 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
         return;
     }
 
-    sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + 1);
+    uint32 difficulty = quest->GetSuggestedPlayers();
+    uint32 points = difficulty == 0 ? 0 : difficulty;
 
-    player->SendSystemMessage("|cffffffffYou have earned |cff00ff001 |cffffffffactivity point for completing a quest!|r");
+    sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+
+    player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
+}
+
+void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarder* rewarder, bool isDungeon, float& /*rate*/)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID();
+    if (!guid)
+    {
+        return;
+    }
+
+    if (!rewarder || !rewarder->GetVictim())
+    {
+        return;
+    }
+
+    auto victim = rewarder->GetVictim();
+
+    player->SendSystemMessage(Acore::StringFormatFmt("Got credit from {}", victim->GetName()));
 }
 
 void WeeklyRewardsPlayerScript::OnLogin(Player* player)
