@@ -10,8 +10,39 @@
 #
 #    WeeklyRewards.Enable
 #        Description: Enable/Disable the module.
+#		 Type:        Bool
 #        Default:     0 - Disabled
 #                     1 - Enabled
 #
 
 WeeklyRewards.Enable = 0
+
+#
+#    WeeklyRewards.Rewards.AchievementPoints.Scaling
+#        Description: Enable/Disable weekly rewards scaling based off achievement points.
+#		 Type:        Bool
+#        			  0 - Disabled
+#        Default:     1 - Enabled
+#
+
+WeeklyRewards.Rewards.AchievementPoints.Scaling = 1
+
+#
+#    WeeklyRewards.Rewards.AchievementPoints.Scalar
+#        Description: The scalar used internally for controlling how much achievement points influences the reward.
+#		 Type:        Float
+#        Default:     200
+#		 Note:        This value is used as a divider internally, the lower this value the higher the reward.
+#
+
+WeeklyRewards.Rewards.AchievementPoints.Scalar = 200
+
+#
+#    WeeklyRewards.Rewards.Activity.Scalar
+#        Description: The scalar used internally for controlling how much activity points influences the reward.
+#	     Type:        Float
+#        Default:     5
+#		 Note:        This value is used as a divider internally, the lower this value the higher the reward.
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Scalar = 5

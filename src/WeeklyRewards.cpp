@@ -111,10 +111,12 @@ void WeeklyRewardsHandler::LoadWeeklyRewards()
         auto itemEntry = fields[0].Get<uint32>();
         auto count = fields[1].Get<uint32>();
         auto maxCount = fields[2].Get<uint32>();
+        auto scalar = fields[3].Get<uint32>();
 
         reward.ItemEntry = itemEntry;
         reward.Count = count;
         reward.MaxCount = maxCount;
+        reward.Scalar = scalar;
 
         WeeklyRewards.push_back(reward);
     }
@@ -221,7 +223,19 @@ void WeeklyRewardsHandler::SendWeeklyRewards(uint64 guid, uint32 points)
             continue;
         }
 
-        auto itemCount = reward.Count * points;
+        uint32 achievementPoints = 0;
+        if (sConfigMgr->GetOption<bool>("WeeklyRewards.Rewards.AchievementPoints.Scaling", true))
+        {
+            achievementPoints = GetAchievementPoints(guid);
+        }
+
+        float achievementScalar = sConfigMgr->GetOption<float>("WeeklyRewards.Rewards.AchievementPoints.Scalar", 200);
+        float activityScalar = sConfigMgr->GetOption<float>("WeeklyRewards.Rewards.ActivityPoints.Scalar", 5);
+
+        // Base Count x (((Achievement Points / 200) + (Activity Points / 5)) x Scalar)
+        float itemCount = reward.Count * (((achievementPoints / achievementScalar) + (points / activityScalar)) * reward.Scalar);
+
+        itemCount = ceil(itemCount);
 
         if (itemCount > reward.MaxCount)
         {
@@ -310,6 +324,48 @@ void WeeklyRewardsHandler::SendMailItems(uint64 guid, std::vector<std::pair<uint
     }
 
     CharacterDatabase.CommitTransaction(trans);
+}
+
+uint32 WeeklyRewardsHandler::GetAchievementPoints(uint64 guid)
+{
+    try
+    {
+        std::vector<uint32> achievements;
+        QueryResult qResult = CharacterDatabase.Query("SELECT achievement FROM character_achievement WHERE guid = {}", guid);
+
+        if (!qResult ||
+            qResult->GetRowCount() < 1)
+        {
+            return 0;
+        }
+
+        do
+        {
+            Field* fields = qResult->Fetch();
+            if (fields->IsNull())
+            {
+                return 0;
+            }
+
+            achievements.push_back(fields[0].Get<uint32>());
+        } while (qResult->NextRow());
+
+        uint32 sum = 0;
+        for (auto it = achievements.begin(); it != achievements.end(); ++it)
+        {
+            auto entry = sAchievementStore.LookupEntry(*it);
+            sum += entry->points;
+        }
+
+        return sum;
+    }
+    catch (std::exception ex)
+    {
+        LOG_INFO("module", "WeeklyRewardsHandler failed to load achievements from DB for guid {}: {}", guid, ex.what());
+        return 0;
+    }
+
+    return 0;
 }
 
 void WeeklyRewardsHandler::FlushWeeklyRewards()

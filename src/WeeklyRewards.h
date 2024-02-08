@@ -11,6 +11,7 @@ struct WeeklyReward
     uint32 ItemEntry;
     uint32 Count;
     uint32 MaxCount;
+    uint32 Scalar;
 };
 
 struct WeeklyActivity
@@ -46,6 +47,7 @@ public:
     void ResetWeeklyActivity(uint64 /*guid*/);
     bool CanSendWeeklyRewards();
     void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
+    uint32 GetAchievementPoints(uint64 /*guid*/);
 
     std::vector<WeeklyReward> WeeklyRewards;
     std::unordered_map<uint64, WeeklyActivity> WeeklyActivities;
