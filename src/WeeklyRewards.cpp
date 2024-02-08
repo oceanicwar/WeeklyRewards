@@ -79,8 +79,48 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
     }
 
     auto victim = rewarder->GetVictim();
+    if (!victim ||
+        !victim->ToCreature())
+    {
+        return;
+    }
 
-    player->SendSystemMessage(Acore::StringFormatFmt("Got credit from {}", victim->GetName()));
+    auto creature = victim->ToCreature();
+
+    auto map = victim->GetMap();
+    if (!map)
+    {
+        return;
+    }
+
+    auto creatureTemplate = creature->GetCreatureTemplate();
+
+    if (map->IsRaid() &&
+        creatureTemplate->rank == CREATURE_ELITE_WORLDBOSS)
+    {
+        uint32 points = 0;
+
+        if (map->IsHeroic())
+        {
+            points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss", 6);
+        }
+        else
+        {
+            points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
+        }
+
+        auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+        if (!activity)
+        {
+            return;
+        }
+
+        sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+
+        return;
+    }
 }
 
 void WeeklyRewardsPlayerScript::OnLogin(Player* player)

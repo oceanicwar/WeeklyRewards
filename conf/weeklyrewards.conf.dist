@@ -64,3 +64,21 @@ WeeklyRewards.Rewards.ActivityPoints.Dungeon.Normal = 3
 #
 
 WeeklyRewards.Rewards.ActivityPoints.Dungeon.Heroic = 6
+
+#
+#    WeeklyRewards.Rewards.ActivityPoints.Raid.Normal
+#        Description: The amount of points to be rewarded for killing a normal raid boss.
+#	     Type:        UInt32
+#        Default:     3
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss = 3
+
+#
+#    WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic
+#        Description: The amount of points to be rewarded for killing a heroic raid boss.
+#	     Type:        UInt32
+#        Default:     6
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss = 6
