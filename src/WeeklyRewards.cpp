@@ -23,12 +23,41 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
         return;
     }
 
-    uint32 difficulty = quest->GetSuggestedPlayers();
-    uint32 points = difficulty == 0 ? 0 : difficulty;
+    uint32 points = 0;
+    uint32 questId = quest->GetQuestId();
+
+    bool isLFGQuest = false;
+
+    switch (questId)
+    {
+    case QUEST_ID_DAILY_HEROIC_FIRST:
+    case QUEST_ID_DAILY_HEROIC_NTH:
+        points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Dungeon.Heroic", 6);
+        isLFGQuest = true;
+        break;
+
+    case QUEST_ID_DAILY_NORMAL_FIRST:
+    case QUEST_ID_DAILY_NORMAL_NTH:
+        points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Dungeon.Normal", 3);
+        isLFGQuest = true;
+        break;
+
+    default:
+        uint32 difficulty = quest->GetSuggestedPlayers();
+        points = difficulty == 0 ? 0 : difficulty;
+        break;
+    }
 
     sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
 
-    player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
+    if (isLFGQuest)
+    {
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a LFG dungeon!|r", points));
+    }
+    else
+    {
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
+    }
 }
 
 void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarder* rewarder, bool isDungeon, float& /*rate*/)

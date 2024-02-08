@@ -46,3 +46,21 @@ WeeklyRewards.Rewards.AchievementPoints.Scalar = 200
 #
 
 WeeklyRewards.Rewards.ActivityPoints.Scalar = 5
+
+#
+#    WeeklyRewards.Rewards.ActivityPoints.Dungeon.Normal
+#        Description: The amount of points to be rewarded for completing a normal level 80 LFG dungeon.
+#	     Type:        UInt32
+#        Default:     3
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Dungeon.Normal = 3
+
+#
+#    WeeklyRewards.Rewards.ActivityPoints.Dungeon.Heroic
+#        Description: The amount of points to be rewarded for completing a heroic level 80 LFG dungeon.
+#	     Type:        UInt32
+#        Default:     6
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Dungeon.Heroic = 6

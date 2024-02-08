@@ -59,6 +59,14 @@ public:
     WeeklyRewardsPlayerScript() : PlayerScript("WeeklyRewardsPlayerScript") { }
 
 private:
+    enum WeeklyRewardsConstants
+    {
+        QUEST_ID_DAILY_HEROIC_FIRST = 24788,
+        QUEST_ID_DAILY_HEROIC_NTH = 24789,
+        QUEST_ID_DAILY_NORMAL_FIRST = 24790,
+        QUEST_ID_DAILY_NORMAL_NTH = 24791
+    };
+private:
     void OnLogin(Player* /*player*/) override;
     void OnLogout(Player* /*player*/) override;
 
