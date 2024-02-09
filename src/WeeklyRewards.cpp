@@ -6,6 +6,11 @@
 
 void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest const* quest)
 {
+    if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
+    {
+        return;
+    }
+
     if (!player || !quest)
     {
         return;
@@ -62,6 +67,11 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
 
 void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarder* rewarder, bool isDungeon, float& /*rate*/)
 {
+    if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
+    {
+        return;
+    }
+
     if (!player)
     {
         return;
@@ -154,6 +164,11 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
 
 void WeeklyRewardsPlayerScript::OnLogin(Player* player)
 {
+    if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
+    {
+        return;
+    }
+
     if (!player)
     {
         return;
@@ -170,6 +185,11 @@ void WeeklyRewardsPlayerScript::OnLogin(Player* player)
 
 void WeeklyRewardsPlayerScript::OnLogout(Player* player)
 {
+    if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
+    {
+        return;
+    }
+
     if (!player)
     {
         return;
@@ -186,6 +206,11 @@ void WeeklyRewardsPlayerScript::OnLogout(Player* player)
 
 void WeeklyRewardsWorldScript::OnAfterConfigLoad(bool /*reload*/)
 {
+    if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
+    {
+        return;
+    }
+
     sWeeklyRewards->LoadWeeklyRewards();
     sWeeklyRewards->LoadWeeklyActivity();
 }
