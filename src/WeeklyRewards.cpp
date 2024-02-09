@@ -130,7 +130,7 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
     {
         // No credit if your level is further than 8 from the rare.
         uint32 deltaLevel = std::abs(player->GetLevel() - creature->GetLevel());
-        LOG_INFO("module", "Delta: {}", deltaLevel);
+
         if (deltaLevel > 8)
         {
             return;
@@ -235,12 +235,12 @@ void WeeklyRewardsHandler::LoadWeeklyRewards()
         auto itemEntry = fields[0].Get<uint32>();
         auto count = fields[1].Get<uint32>();
         auto maxCount = fields[2].Get<uint32>();
-        auto scalar = fields[3].Get<uint32>();
+        auto multiplier = fields[3].Get<uint32>();
 
         reward.ItemEntry = itemEntry;
         reward.Count = count;
         reward.MaxCount = maxCount;
-        reward.Scalar = scalar;
+        reward.Multiplier = multiplier;
 
         WeeklyRewards.push_back(reward);
     }
@@ -353,11 +353,11 @@ void WeeklyRewardsHandler::SendWeeklyRewards(uint64 guid, uint32 points)
             achievementPoints = GetAchievementPoints(guid);
         }
 
-        float achievementScalar = sConfigMgr->GetOption<float>("WeeklyRewards.Rewards.AchievementPoints.Scalar", 200);
-        float activityScalar = sConfigMgr->GetOption<float>("WeeklyRewards.Rewards.ActivityPoints.Scalar", 5);
+        float achievementScalar = sConfigMgr->GetOption<float>("WeeklyRewards.Rewards.AchievementPoints.Scalar", 1000);
+        float activityScalar = sConfigMgr->GetOption<float>("WeeklyRewards.Rewards.ActivityPoints.Scalar", 1);
 
-        // Base Count x (((Achievement Points / 200) + (Activity Points / 5)) x Scalar)
-        float itemCount = reward.Count * (((achievementPoints / achievementScalar) + (points / activityScalar)) * reward.Scalar);
+        // (Base Count x (Achievement Points / 1000) + Activity Points) x Multiplier
+        float itemCount = (reward.Count * ((achievementPoints / achievementScalar) + (points / activityScalar))) * reward.Multiplier;
 
         itemCount = ceil(itemCount);
 

@@ -11,7 +11,7 @@ struct WeeklyReward
     uint32 ItemEntry;
     uint32 Count;
     uint32 MaxCount;
-    uint32 Scalar;
+    uint32 Multiplier;
 };
 
 struct WeeklyActivity
