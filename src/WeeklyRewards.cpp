@@ -445,7 +445,9 @@ void WeeklyRewardsHandler::SendMailItems(uint64 guid, std::vector<std::pair<uint
 
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
-    MailSender sender(MAIL_CREATURE, 2442); // Cow
+    uint32 senderEntry = sConfigMgr->GetOption<uint32>("WeeklyRewards.Mail.Sender", 34337);
+
+    MailSender sender(MAIL_CREATURE, senderEntry);
     MailDraft draft(subject, body);
 
     for (auto const& items : allItems)

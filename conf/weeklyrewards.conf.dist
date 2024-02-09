@@ -91,3 +91,12 @@ WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss = 6
 #
 
 WeeklyRewards.Rewards.ActivityPoints.Rare = 2
+
+#
+#    WeeklyRewards.Mail.Sender
+#        Description: A creature_template entry which shows up as sender in the mailbox for rewards.
+#	     Type:        UInt32
+#        Default:     34337 (The Postmaster)
+#
+
+WeeklyRewards.Mail.Sender = 34337
