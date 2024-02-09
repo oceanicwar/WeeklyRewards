@@ -100,3 +100,12 @@ WeeklyRewards.Rewards.ActivityPoints.Rare = 2
 #
 
 WeeklyRewards.Mail.Sender = 34337
+
+#
+#    WeeklyRewards.ActivityPoints.Maximum
+#        Description: The maximum amount of activity points you can earn in a week.
+#	     Type:        UInt32
+#        Default:     100
+#
+
+WeeklyRewards.ActivityPoints.Maximum = 100

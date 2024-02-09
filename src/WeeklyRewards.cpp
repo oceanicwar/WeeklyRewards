@@ -49,11 +49,17 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
 
     default:
         uint32 difficulty = quest->GetSuggestedPlayers();
-        points = difficulty == 0 ? 0 : difficulty;
+        points = difficulty == 0 ? 1 : std::ceil(difficulty / 2);
         break;
     }
 
-    sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+    auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+
+    if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
+        result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
+    {
+        return;
+    }
 
     if (isLFGQuest)
     {
@@ -62,6 +68,11 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
     else
     {
         player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
+    }
+
+    if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+    {
+        player->SendSystemMessage("You have reached your maximum activity points for this week.");
     }
 }
 
@@ -125,9 +136,20 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             return;
         }
 
-        sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+        auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+
+        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
+            result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
+        {
+            return;
+        }
 
         player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+
+        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+        {
+            player->SendSystemMessage("You have reached your maximum activity points for this week.");
+        }
 
         return;
     }
@@ -154,9 +176,20 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             return;
         }
 
-        sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+        auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+
+        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
+            result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
+        {
+            return;
+        }
 
         player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
+
+        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+        {
+            player->SendSystemMessage("You have reached your maximum activity points for this week.");
+        }
 
         return;
     }
@@ -347,16 +380,38 @@ WeeklyActivity* WeeklyRewardsHandler::GetPlayerActivity(uint64 guid)
     return &it->second;
 }
 
-void WeeklyRewardsHandler::UpdatePlayerActivity(uint64 guid, uint32 points)
+WeeklyRewardsUpdateResult WeeklyRewardsHandler::UpdatePlayerActivity(uint64 guid, uint32 points)
 {
     auto it = WeeklyActivities.find(guid);
     if (it == WeeklyActivities.end())
     {
-        return;
+        return WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY;
     }
 
     auto activity = &it->second;
+    uint32 maxPoints = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
+
+    if (activity->Points >= maxPoints)
+    {
+        return WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX;
+    }
+
+    bool recentlyMax = false;
+    if (points > activity->Points)
+    {
+        points = std::clamp(points, 0U, maxPoints);
+        recentlyMax = true;
+    }
+
+    points = std::clamp(points, 0U, maxPoints);
     activity->Points = points;
+
+    if (recentlyMax)
+    {
+        return WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX;
+    }
+
+    return WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_OK;
 }
 
 void WeeklyRewardsHandler::SendWeeklyRewards(uint64 guid, uint32 points)
@@ -543,7 +598,13 @@ void WeeklyRewardsHandler::FlushWeeklyRewards()
 
 void WeeklyRewardsHandler::ResetWeeklyActivity(uint64 guid)
 {
-    UpdatePlayerActivity(guid, 0);
+    auto it = WeeklyActivities.find(guid);
+    if (it == WeeklyActivities.end())
+    {
+        return;
+    }
+
+    it->second.Points = 0;
 }
 
 bool WeeklyRewardsHandler::CanSendWeeklyRewards()

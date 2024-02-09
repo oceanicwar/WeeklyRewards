@@ -20,6 +20,14 @@ struct WeeklyActivity
     uint32 Points;
 };
 
+enum WeeklyRewardsUpdateResult
+{
+    WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX = 0,
+    WEEKLY_REWARD_UPDATE_RESULT_MAX = 1,
+    WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY = 2,
+    WEEKLY_REWARD_UPDATE_RESULT_OK = 3
+};
+
 #define sWeeklyRewards WeeklyRewardsHandler::GetInstance()
 
 class WeeklyRewardsHandler
@@ -41,7 +49,7 @@ public:
     void CreatePlayerActivity(uint64 /*guid*/);
     void SavePlayerActivity(uint64 /*guid*/);
     WeeklyActivity* GetPlayerActivity(uint64 /*guid*/);
-    void UpdatePlayerActivity(uint64 /*guid*/, uint32 /*points*/);
+    WeeklyRewardsUpdateResult UpdatePlayerActivity(uint64 /*guid*/, uint32 /*points*/);
     void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
     void FlushWeeklyRewards();
     void ResetWeeklyActivity(uint64 /*guid*/);
