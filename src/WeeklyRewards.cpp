@@ -121,6 +121,35 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
 
         return;
     }
+
+    if (!map->IsRaid() &&
+        !map->IsDungeon() &&
+        !map->IsBattleground() &&
+        (creatureTemplate->rank == CREATURE_ELITE_RAREELITE ||
+            creatureTemplate->rank == CREATURE_ELITE_RARE))
+    {
+        // No credit if your level is further than 8 from the rare.
+        uint32 deltaLevel = std::abs(player->GetLevel() - creature->GetLevel());
+        LOG_INFO("module", "Delta: {}", deltaLevel);
+        if (deltaLevel > 8)
+        {
+            return;
+        }
+
+        uint32 points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Rare", 2);
+
+        auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+        if (!activity)
+        {
+            return;
+        }
+
+        sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
+
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
+
+        return;
+    }
 }
 
 void WeeklyRewardsPlayerScript::OnLogin(Player* player)

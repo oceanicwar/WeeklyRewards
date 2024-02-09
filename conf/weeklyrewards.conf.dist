@@ -82,3 +82,12 @@ WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss = 3
 #
 
 WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss = 6
+
+#
+#    WeeklyRewards.Rewards.ActivityPoints.Rare
+#        Description: The amount of points to be rewarded for killing an open world rare.
+#	     Type:        UInt32
+#        Default:     2
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Rare = 2
