@@ -2,6 +2,7 @@
 #define MODULE_WEEKLY_REWARDS_H
 
 #include "ScriptMgr.h"
+#include "KillRewarder.h"
 
 #include <unordered_map>
 #include <vector>
