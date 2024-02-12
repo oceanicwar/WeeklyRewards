@@ -118,3 +118,23 @@ WeeklyRewards.Mail.Sender = 34337
 #
 
 WeeklyRewards.ActivityPoints.Maximum = 100
+
+#
+#    WeeklyRewards.ActivityPoints.Notify
+#        Description: Notifies the player when they receive activity points.
+#		 Type:        Bool
+#                     0 - Disabled
+#        Default:     1 - Enabled
+#
+
+WeeklyRewards.ActivityPoints.Notify = 1
+
+#
+#    WeeklyRewards.ActivityPoints.Notify
+#        Description: Notifies the players of their activity points on login.
+#		 Type:        Bool
+#                     0 - Disabled
+#        Default:     1 - Enabled
+#
+
+WeeklyRewards.ActivityPoints.Notify.Login = 1

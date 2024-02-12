@@ -61,18 +61,21 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
         return;
     }
 
-    if (isLFGQuest)
+    if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
     {
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a LFG dungeon!|r", points));
-    }
-    else
-    {
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
-    }
+        if (isLFGQuest)
+        {
+            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a LFG dungeon!|r", points));
+        }
+        else
+        {
+            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
+        }
 
-    if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
-    {
-        player->SendSystemMessage("You have reached your maximum activity points for this week.");
+        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+        {
+            player->SendSystemMessage("You have reached your maximum activity points for this week.");
+        }
     }
 }
 
@@ -144,11 +147,14 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             return;
         }
 
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
-
-        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+        if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
         {
-            player->SendSystemMessage("You have reached your maximum activity points for this week.");
+            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+
+            if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+            {
+                player->SendSystemMessage("You have reached your maximum activity points for this week.");
+            }
         }
 
         return;
@@ -194,11 +200,14 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             return;
         }
 
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
-
-        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+        if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
         {
-            player->SendSystemMessage("You have reached your maximum activity points for this week.");
+            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
+
+            if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+            {
+                player->SendSystemMessage("You have reached your maximum activity points for this week.");
+            }
         }
 
         return;
@@ -224,6 +233,31 @@ void WeeklyRewardsPlayerScript::OnLogin(Player* player)
     }
 
     sWeeklyRewards->CreatePlayerActivity(guid.GetRawValue());
+
+    if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify.Login", true))
+    {
+        auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+        if (!activity)
+        {
+            return;
+        }
+
+        if (activity->Points == 0)
+        {
+            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have not collected any activity points this week.|r"));
+            return;
+        }
+
+        auto maxActivity = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
+
+        if (activity->Points >= maxActivity)
+        {
+            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have reached your maximum activity points for this week ({}).|r", maxActivity));
+            return;
+        }
+
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have collected |cff00ff00{} |cffffffffactivity points this week.|r", activity->Points));
+    }
 }
 
 void WeeklyRewardsPlayerScript::OnLogout(Player* player)
