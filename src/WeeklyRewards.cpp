@@ -168,7 +168,17 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             return;
         }
 
-        uint32 points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Rare", 2);
+        uint32 points = 0;
+
+        if (creatureTemplate->rank == CREATURE_ELITE_RARE)
+        {
+            points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Rare", 2);
+        }
+
+        if (creatureTemplate->rank == CREATURE_ELITE_RAREELITE)
+        {
+            points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.RareElite", 4);
+        }
 
         auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
         if (!activity)

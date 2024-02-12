@@ -93,6 +93,15 @@ WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss = 6
 WeeklyRewards.Rewards.ActivityPoints.Rare = 2
 
 #
+#    WeeklyRewards.Rewards.ActivityPoints.RareElite
+#        Description: The amount of points to be rewarded for killing an open world rare elite.
+#	     Type:        UInt32
+#        Default:     4
+#
+
+WeeklyRewards.Rewards.ActivityPoints.RareElite = 4
+
+#
 #    WeeklyRewards.Mail.Sender
 #        Description: A creature_template entry which shows up as sender in the mailbox for rewards.
 #	     Type:        UInt32
