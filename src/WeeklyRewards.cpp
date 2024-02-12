@@ -433,15 +433,17 @@ WeeklyRewardsUpdateResult WeeklyRewardsHandler::UpdatePlayerActivity(uint64 guid
     }
 
     auto activity = &it->second;
+    auto activityPoints = activity->Points;
+
     uint32 maxPoints = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
 
-    if (activity->Points >= maxPoints)
+    if (activityPoints >= maxPoints)
     {
         return WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX;
     }
 
     bool recentlyMax = false;
-    if (points > activity->Points)
+    if (points >= maxPoints)
     {
         points = std::clamp(points, 0U, maxPoints);
         recentlyMax = true;
