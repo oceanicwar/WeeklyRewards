@@ -79,7 +79,7 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
     }
 }
 
-void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarder* rewarder, bool isDungeon, float& /*rate*/)
+void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarder* rewarder, bool /*isDungeon*/, float& /*rate*/)
 {
     if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
     {
