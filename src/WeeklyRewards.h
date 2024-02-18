@@ -47,6 +47,7 @@ public:
 public:
     void LoadWeeklyRewards();
     void LoadWeeklyActivity();
+    void LoadBlacklist();
     void CreatePlayerActivity(uint64 /*guid*/);
     void SavePlayerActivity(uint64 /*guid*/);
     WeeklyActivity* GetPlayerActivity(uint64 /*guid*/);
@@ -57,9 +58,11 @@ public:
     bool CanSendWeeklyRewards();
     void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
     uint32 GetAchievementPoints(uint64 /*guid*/);
+    bool IsCreatureBlacklisted(Creature* /*creature*/);
 
     std::vector<WeeklyReward> WeeklyRewards;
     std::unordered_map<uint64, WeeklyActivity> WeeklyActivities;
+    std::unordered_set<uint32> BlacklistCreatures;
 };
 
 class WeeklyRewardsPlayerScript : public PlayerScript

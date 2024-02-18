@@ -111,6 +111,11 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
 
     auto creature = victim->ToCreature();
 
+    if (sWeeklyRewards->IsCreatureBlacklisted(creature))
+    {
+        return;
+    }
+
     auto map = victim->GetMap();
     if (!map)
     {
@@ -290,6 +295,7 @@ void WeeklyRewardsWorldScript::OnAfterConfigLoad(bool /*reload*/)
 
     sWeeklyRewards->LoadWeeklyRewards();
     sWeeklyRewards->LoadWeeklyActivity();
+    sWeeklyRewards->LoadBlacklist();
 }
 
 void WeeklyRewardsEventScript::OnStart(uint16 eventId)
@@ -382,6 +388,12 @@ void WeeklyRewardsHandler::LoadWeeklyActivity()
     while (qResult->NextRow());
 
     LOG_INFO("module", ">> Loaded '{}' weekly activity.", WeeklyActivities.size());
+}
+
+void WeeklyRewardsHandler::LoadBlacklist()
+{
+    BlacklistCreatures.insert(15929); // Naxxramas - Thaddius - Stalagg
+    BlacklistCreatures.insert(15930); // Naxxramas - Thaddius - Feugen
 }
 
 void WeeklyRewardsHandler::CreatePlayerActivity(uint64 guid)
@@ -618,6 +630,19 @@ uint32 WeeklyRewardsHandler::GetAchievementPoints(uint64 guid)
     }
 
     return 0;
+}
+
+bool WeeklyRewardsHandler::IsCreatureBlacklisted(Creature* creature)
+{
+    uint32 entry = creature->GetCreatureTemplate()->Entry;
+
+    auto it = BlacklistCreatures.find(entry);
+    if (it == BlacklistCreatures.end())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void WeeklyRewardsHandler::FlushWeeklyRewards()
