@@ -101,6 +101,7 @@ private:
 
     void OnPlayerCompleteQuest(Player* /*player*/, Quest const* /*quest*/) override;
     void OnRewardKillRewarder(Player* /*player*/, KillRewarder* /*rewarder*/, bool /*isDungeon*/, float& /*rate*/) override;
+    void OnUpdateGatheringSkill(Player* /*player*/, uint32 /*skillId*/, uint32 /*current*/, uint32 /*gray*/, uint32 /*green*/, uint32 /*yellow*/, uint32& /*gain*/) override;
 };
 
 class WeeklyRewardsWorldScript : public WorldScript
