@@ -158,7 +158,7 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
     }
 }
 
-void WeeklyRewardsPlayerScript::OnUpdateGatheringSkill(Player* player, uint32 /*skillId*/, uint32 /*current*/, uint32 gray, uint32 green, uint32 yellow, uint32& gain)
+void WeeklyRewardsPlayerScript::OnUpdateGatheringSkill(Player* player, uint32 /*skillId*/, uint32 /*current*/, uint32 /*gray*/, uint32 /*green*/, uint32 /*yellow*/, uint32& /*gain*/)
 {
     if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
     {
