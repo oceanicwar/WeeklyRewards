@@ -1,6 +1,7 @@
 #include "WeeklyRewards.h"
 
 #include "Config.h"
+#include "Chat.h"
 #include "GameTime.h"
 #include "Player.h"
 
@@ -703,10 +704,63 @@ void WeeklyRewardsGlobalScript::OnBeforeSetBossState(uint32 id, EncounterState n
     }
 }
 
+ChatCommandTable WeeklyRewardsCommandScript::GetCommands() const
+{
+    static ChatCommandTable wrCommandTable =
+    {
+        { "activity", HandleActivityCommand, SEC_PLAYER, Console::No }
+    };
+
+    return wrCommandTable;
+}
+
+bool WeeklyRewardsCommandScript::HandleActivityCommand(ChatHandler* handler)
+{
+    if (!handler)
+    {
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto player = handler->GetPlayer();
+    if (!player)
+    {
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto guid = player->GetGUID();
+
+    auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+    if (!activity)
+    {
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
+    if (activity->Points == 0)
+    {
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have not collected any activity points this week.|r"));
+        return true;
+    }
+
+    auto maxActivity = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
+
+    if (activity->Points >= maxActivity)
+    {
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have reached your maximum activity points for this week ({}).|r", maxActivity));
+        return true;
+    }
+
+    player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have collected |cff00ff00{} |cffffffffactivity points this week.|r", activity->Points));
+    return true;
+}
+
 void SC_AddWeekyRewardsScripts()
 {
     new WeeklyRewardsWorldScript();
     new WeeklyRewardsPlayerScript();
     new WeeklyRewardsEventScript();
     new WeeklyRewardsGlobalScript();
+    new WeeklyRewardsCommandScript();
 }

@@ -1,11 +1,14 @@
 #ifndef MODULE_WEEKLY_REWARDS_H
 #define MODULE_WEEKLY_REWARDS_H
 
+#include "ChatCommand.h"
 #include "ScriptMgr.h"
 #include "KillRewarder.h"
 
 #include <unordered_map>
 #include <vector>
+
+using namespace Acore::ChatCommands;
 
 struct WeeklyReward
 {
@@ -118,6 +121,16 @@ private:
     };
 private:
     void OnBeforeSetBossState(uint32 /*id*/, EncounterState /*newState*/, EncounterState /*oldState*/, Map* /*instance*/) override;
+};
+
+class WeeklyRewardsCommandScript : public CommandScript
+{
+public:
+    WeeklyRewardsCommandScript() : CommandScript("WeeklyRewardsCommandScript") { }
+
+private:
+    ChatCommandTable GetCommands() const override;
+    static bool HandleActivityCommand(ChatHandler* /*handler*/);
 };
 
 #endif // MODULE_WEEKLY_REWARDS_H
