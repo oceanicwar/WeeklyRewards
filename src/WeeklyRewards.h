@@ -1,11 +1,14 @@
 #ifndef MODULE_WEEKLY_REWARDS_H
 #define MODULE_WEEKLY_REWARDS_H
 
+#include "ChatCommand.h"
 #include "ScriptMgr.h"
 #include "KillRewarder.h"
 
 #include <unordered_map>
 #include <vector>
+
+using namespace Acore::ChatCommands;
 
 struct WeeklyReward
 {
@@ -43,23 +46,40 @@ public:
 
         return &instance;
     }
+private:
+    enum WeeklyRewardsHandlerConstants
+    {
+        INSTANCE_NAXXRAMAS = 533,
+        INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN = 12,
 
+        INSTANCE_MOLTEN_CORE = 409,
+        INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO = 8
+    };
 public:
     void LoadWeeklyRewards();
     void LoadWeeklyActivity();
+    void LoadBlacklist();
+    void LoadSpecialEncounters();
+    void AddSpecialEncounter(uint32 /*instanceId*/, uint32 /*encounterId*/);
+    bool IsSpecialEncounter(uint32 /*instanceId*/, uint32 /*encounterId*/);
     void CreatePlayerActivity(uint64 /*guid*/);
     void SavePlayerActivity(uint64 /*guid*/);
     WeeklyActivity* GetPlayerActivity(uint64 /*guid*/);
     WeeklyRewardsUpdateResult UpdatePlayerActivity(uint64 /*guid*/, uint32 /*points*/);
+    void AddPlayerActivity(Player* /*player*/, uint32 /*newPoints*/, std::string msg = "");
     void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
     void FlushWeeklyRewards();
     void ResetWeeklyActivity(uint64 /*guid*/);
     bool CanSendWeeklyRewards();
     void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
     uint32 GetAchievementPoints(uint64 /*guid*/);
+    bool IsCreatureBlacklisted(Creature* /*creature*/);
+    void PrintActivity(Player* /*player*/);
 
     std::vector<WeeklyReward> WeeklyRewards;
     std::unordered_map<uint64, WeeklyActivity> WeeklyActivities;
+    std::unordered_set<uint32> BlacklistCreatures;
+    std::unordered_map<uint32, std::unordered_set<uint32>> SpecialEncounters;
 };
 
 class WeeklyRewardsPlayerScript : public PlayerScript
@@ -99,6 +119,24 @@ public:
 
 private:
     void OnStart(uint16 /*eventId*/) override;
+};
+
+class WeeklyRewardsGlobalScript : public GlobalScript
+{
+public:
+    WeeklyRewardsGlobalScript() : GlobalScript("WeeklyRewardsGlobalScript") { }
+private:
+    void OnBeforeSetBossState(uint32 /*id*/, EncounterState /*newState*/, EncounterState /*oldState*/, Map* /*instance*/) override;
+};
+
+class WeeklyRewardsCommandScript : public CommandScript
+{
+public:
+    WeeklyRewardsCommandScript() : CommandScript("WeeklyRewardsCommandScript") { }
+
+private:
+    ChatCommandTable GetCommands() const override;
+    static bool HandleActivityCommand(ChatHandler* /*handler*/);
 };
 
 #endif // MODULE_WEEKLY_REWARDS_H
