@@ -117,7 +117,10 @@ private:
     enum WeeklyRewardsGlobalScriptConstants
     {
         INSTANCE_NAXXRAMAS = 533,
-        INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN = 12
+        INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN = 12,
+
+        INSTANCE_MOLTEN_CORE = 409,
+        INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO = 8
     };
 private:
     void OnBeforeSetBossState(uint32 /*id*/, EncounterState /*newState*/, EncounterState /*oldState*/, Map* /*instance*/) override;

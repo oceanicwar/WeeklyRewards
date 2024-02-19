@@ -674,10 +674,15 @@ void WeeklyRewardsGlobalScript::OnBeforeSetBossState(uint32 id, EncounterState n
         return;
     }
 
-    if (instance->GetId() == INSTANCE_NAXXRAMAS)
+    uint32 instanceId = instance->GetId();
+
+    if (instanceId == INSTANCE_NAXXRAMAS ||
+        instanceId == INSTANCE_MOLTEN_CORE)
     {
-        if (id == INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN &&
-            newState == DONE)
+        if ((id == INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN &&
+            newState == DONE) ||
+            (id == INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO &&
+                newState == DONE))
         {
             uint32 points = 0;
 
