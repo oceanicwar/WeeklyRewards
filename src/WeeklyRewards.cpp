@@ -689,21 +689,16 @@ void WeeklyRewardsGlobalScript::OnBeforeSetBossState(uint32 id, EncounterState n
                 points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
             }
 
-            auto players = instance->GetPlayers();
-            if (!players.IsEmpty())
+            instance->DoForAllPlayers([&](Player* player)
             {
-                for (const auto& playerRef : players)
+                if (!player || !player->IsInWorld())
                 {
-                    auto player = playerRef.GetSource();
-                    if (!player || !player->IsInWorld())
-                    {
-                        continue;
-                    }
-
-                    sWeeklyRewards->AddPlayerActivity(player, points,
-                        Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+                    return;
                 }
-            }
+
+                sWeeklyRewards->AddPlayerActivity(player, points,
+                    Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+            });
         }
     }
 }
