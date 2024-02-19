@@ -158,6 +158,31 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
     }
 }
 
+void WeeklyRewardsPlayerScript::OnUpdateGatheringSkill(Player* player, uint32 /*skillId*/, uint32 /*current*/, uint32 /*gray*/, uint32 /*green*/, uint32 /*yellow*/, uint32& /*gain*/)
+{
+    if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
+    {
+        return;
+    }
+
+    if (!player)
+    {
+        return;
+    }
+
+    uint32 points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Gather", 1);
+    uint32 chance = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Gather.Chance", 10);
+
+    uint32 roll = urand(0, 100);
+    if (roll > chance)
+    {
+        return;
+    }
+
+    sWeeklyRewards->AddPlayerActivity(player, points,
+        Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for gathering!|r", points));
+}
+
 void WeeklyRewardsPlayerScript::OnLogin(Player* player)
 {
     if (!sConfigMgr->GetOption<bool>("WeeklyRewards.Enable", false))
@@ -791,8 +816,6 @@ bool WeeklyRewardsCommandScript::HandleActivityCommand(ChatHandler* handler)
         handler->SetSentErrorMessage(true);
         return false;
     }
-
-    auto guid = player->GetGUID();
 
     sWeeklyRewards->PrintActivity(player);
     return true;

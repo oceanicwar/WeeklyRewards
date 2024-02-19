@@ -102,6 +102,25 @@ WeeklyRewards.Rewards.ActivityPoints.Rare = 2
 WeeklyRewards.Rewards.ActivityPoints.RareElite = 4
 
 #
+#    WeeklyRewards.Rewards.ActivityPoints.Gather
+#        Description: The amount of points to be rewarded for gathering in the open world.
+#		 Type:        UInt32
+#        Default:     1
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Gather = 1
+
+#
+#    WeeklyRewards.Rewards.ActivityPoints.Gather
+#        Description: The chance that you have to gain a point for gathering.
+#	 	 Type:        UInt32
+#        Default:     1
+#	 Range:       0-100
+#
+
+WeeklyRewards.Rewards.ActivityPoints.Gather.Chance = 10
+
+#
 #    WeeklyRewards.Mail.Sender
 #        Description: A creature_template entry which shows up as sender in the mailbox for rewards.
 #	     Type:        UInt32
