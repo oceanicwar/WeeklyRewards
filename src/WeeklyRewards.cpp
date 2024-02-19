@@ -369,6 +369,11 @@ void WeeklyRewardsHandler::LoadBlacklist()
         BlacklistCreatures.insert(16065); // Four Horsemen - Lady Blaumeux
         BlacklistCreatures.insert(16064); // Four Horsemen - Thane Korthazz
     }
+
+    // Zul'Gurub
+    {
+        BlacklistCreatures.insert(14988); // Bloodlord Mandokir - Ohgan
+    }
 }
 
 void WeeklyRewardsHandler::LoadSpecialEncounters()
