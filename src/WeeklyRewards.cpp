@@ -53,30 +53,10 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
         break;
     }
 
-    auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
-
-    if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
-        result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
-    {
-        return;
-    }
-
-    if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
-    {
-        if (isLFGQuest)
-        {
-            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a LFG dungeon!|r", points));
-        }
-        else
-        {
-            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
-        }
-
-        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
-        {
-            player->SendSystemMessage("You have reached your maximum activity points for this week.");
-        }
-    }
+    sWeeklyRewards->AddPlayerActivity(player, points,
+        isLFGQuest ?
+        Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a LFG dungeon!|r", points) :
+        Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a quest!|r", points));
 }
 
 void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarder* rewarder, bool /*isDungeon*/, float& /*rate*/)
@@ -138,29 +118,8 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
         }
 
-        auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
-        if (!activity)
-        {
-            return;
-        }
-
-        auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
-
-        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
-            result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
-        {
-            return;
-        }
-
-        if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
-        {
-            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
-
-            if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
-            {
-                player->SendSystemMessage("You have reached your maximum activity points for this week.");
-            }
-        }
+        sWeeklyRewards->AddPlayerActivity(player, points,
+            Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
 
         return;
     }
@@ -191,29 +150,8 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.RareElite", 4);
         }
 
-        auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
-        if (!activity)
-        {
-            return;
-        }
-
-        auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + points);
-
-        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
-            result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
-        {
-            return;
-        }
-
-        if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
-        {
-            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
-
-            if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
-            {
-                player->SendSystemMessage("You have reached your maximum activity points for this week.");
-            }
-        }
+        sWeeklyRewards->AddPlayerActivity(player, points,
+            Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
 
         return;
     }
@@ -392,8 +330,16 @@ void WeeklyRewardsHandler::LoadWeeklyActivity()
 
 void WeeklyRewardsHandler::LoadBlacklist()
 {
-    BlacklistCreatures.insert(15929); // Naxxramas - Thaddius - Stalagg
-    BlacklistCreatures.insert(15930); // Naxxramas - Thaddius - Feugen
+    //  Naxxramas
+    {
+        BlacklistCreatures.insert(15929); // Thaddius - Stalagg
+        BlacklistCreatures.insert(15930); // Thaddius - Feugen
+
+        BlacklistCreatures.insert(30549); // Four Horsemen - Baron Rivendare
+        BlacklistCreatures.insert(16063); // Four Horsemen - Sir Zeliek
+        BlacklistCreatures.insert(16065); // Four Horsemen - Lady Blaumeux
+        BlacklistCreatures.insert(16064); // Four Horsemen - Thane Korthazz
+    }
 }
 
 void WeeklyRewardsHandler::CreatePlayerActivity(uint64 guid)
@@ -470,6 +416,43 @@ WeeklyRewardsUpdateResult WeeklyRewardsHandler::UpdatePlayerActivity(uint64 guid
     }
 
     return WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_OK;
+}
+
+void WeeklyRewardsHandler::AddPlayerActivity(Player* player, uint32 newPoints, std::string msg)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID();
+
+    auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+    if (!activity)
+    {
+        return;
+    }
+
+    auto result = sWeeklyRewards->UpdatePlayerActivity(guid.GetRawValue(), activity->Points + newPoints);
+
+    if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_NO_ACTIVITY ||
+        result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_MAX)
+    {
+        return;
+    }
+
+    if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify", true))
+    {
+        if (!msg.empty())
+        {
+            player->SendSystemMessage(msg);
+        }
+
+        if (result == WeeklyRewardsUpdateResult::WEEKLY_REWARD_UPDATE_RESULT_RECENTLY_MAX)
+        {
+            player->SendSystemMessage("You have reached your maximum activity points for this week.");
+        }
+    }
 }
 
 void WeeklyRewardsHandler::SendWeeklyRewards(uint64 guid, uint32 points)
@@ -683,9 +666,52 @@ bool WeeklyRewardsHandler::CanSendWeeklyRewards()
     return true;
 }
 
+void WeeklyRewardsGlobalScript::OnBeforeSetBossState(uint32 id, EncounterState newState, EncounterState /*oldState*/, Map* instance)
+{
+    if (!instance)
+    {
+        return;
+    }
+
+    if (instance->GetId() == INSTANCE_NAXXRAMAS)
+    {
+        if (id == INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN &&
+            newState == DONE)
+        {
+            uint32 points = 0;
+
+            if (instance->IsHeroic())
+            {
+                points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss", 6);
+            }
+            else
+            {
+                points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
+            }
+
+            auto players = instance->GetPlayers();
+            if (!players.IsEmpty())
+            {
+                for (const auto& playerRef : players)
+                {
+                    auto player = playerRef.GetSource();
+                    if (!player || !player->IsInWorld())
+                    {
+                        continue;
+                    }
+
+                    sWeeklyRewards->AddPlayerActivity(player, points,
+                        Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+                }
+            }
+        }
+    }
+}
+
 void SC_AddWeekyRewardsScripts()
 {
     new WeeklyRewardsWorldScript();
     new WeeklyRewardsPlayerScript();
     new WeeklyRewardsEventScript();
+    new WeeklyRewardsGlobalScript();
 }

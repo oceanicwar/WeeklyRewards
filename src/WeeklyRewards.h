@@ -52,6 +52,7 @@ public:
     void SavePlayerActivity(uint64 /*guid*/);
     WeeklyActivity* GetPlayerActivity(uint64 /*guid*/);
     WeeklyRewardsUpdateResult UpdatePlayerActivity(uint64 /*guid*/, uint32 /*points*/);
+    void AddPlayerActivity(Player* /*player*/, uint32 /*newPoints*/, std::string msg = "");
     void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
     void FlushWeeklyRewards();
     void ResetWeeklyActivity(uint64 /*guid*/);
@@ -102,6 +103,21 @@ public:
 
 private:
     void OnStart(uint16 /*eventId*/) override;
+};
+
+class WeeklyRewardsGlobalScript : public GlobalScript
+{
+public:
+    WeeklyRewardsGlobalScript() : GlobalScript("WeeklyRewardsGlobalScript") { }
+
+private:
+    enum WeeklyRewardsGlobalScriptConstants
+    {
+        INSTANCE_NAXXRAMAS = 533,
+        INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN = 12
+    };
+private:
+    void OnBeforeSetBossState(uint32 /*id*/, EncounterState /*newState*/, EncounterState /*oldState*/, Map* /*instance*/) override;
 };
 
 #endif // MODULE_WEEKLY_REWARDS_H
