@@ -503,7 +503,7 @@ void WeeklyRewardsHandler::SendWeeklyRewards(uint64 guid, uint32 points)
             continue;
         }
 
-        uint32 achievementPoints = 0;
+        uint32 achievementPoints = 1;
         if (sConfigMgr->GetOption<bool>("WeeklyRewards.Rewards.AchievementPoints.Scaling", true))
         {
             achievementPoints = GetAchievementPoints(guid);
