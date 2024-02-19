@@ -180,27 +180,7 @@ void WeeklyRewardsPlayerScript::OnLogin(Player* player)
 
     if (sConfigMgr->GetOption<bool>("WeeklyRewards.ActivityPoints.Notify.Login", true))
     {
-        auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
-        if (!activity)
-        {
-            return;
-        }
-
-        if (activity->Points == 0)
-        {
-            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have not collected any activity points this week.|r"));
-            return;
-        }
-
-        auto maxActivity = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
-
-        if (activity->Points >= maxActivity)
-        {
-            player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have reached your maximum activity points for this week ({}).|r", maxActivity));
-            return;
-        }
-
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have collected |cff00ff00{} |cffffffffactivity points this week.|r", activity->Points));
+        sWeeklyRewards->PrintActivity(player);
     }
 }
 
@@ -683,6 +663,37 @@ bool WeeklyRewardsHandler::IsCreatureBlacklisted(Creature* creature)
     return true;
 }
 
+void WeeklyRewardsHandler::PrintActivity(Player* player)
+{
+    if (!player)
+    {
+        return;
+    }
+
+    auto guid = player->GetGUID();
+    auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
+    if (!activity)
+    {
+        return;
+    }
+
+    if (activity->Points == 0)
+    {
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have not collected any activity points this week.|r"));
+        return;
+    }
+
+    auto maxActivity = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
+
+    if (activity->Points >= maxActivity)
+    {
+        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have reached your maximum activity points for this week ({}).|r", maxActivity));
+        return;
+    }
+
+    player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have collected |cff00ff00{} |cffffffffactivity points this week.|r", activity->Points));
+}
+
 void WeeklyRewardsHandler::FlushWeeklyRewards()
 {
     LOG_INFO("module", "Flushing weekly rewards..");
@@ -783,28 +794,7 @@ bool WeeklyRewardsCommandScript::HandleActivityCommand(ChatHandler* handler)
 
     auto guid = player->GetGUID();
 
-    auto activity = sWeeklyRewards->GetPlayerActivity(guid.GetRawValue());
-    if (!activity)
-    {
-        handler->SetSentErrorMessage(true);
-        return false;
-    }
-
-    if (activity->Points == 0)
-    {
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have not collected any activity points this week.|r"));
-        return true;
-    }
-
-    auto maxActivity = sConfigMgr->GetOption<uint32>("WeeklyRewards.ActivityPoints.Maximum", 100);
-
-    if (activity->Points >= maxActivity)
-    {
-        player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have reached your maximum activity points for this week ({}).|r", maxActivity));
-        return true;
-    }
-
-    player->SendSystemMessage(Acore::StringFormatFmt("|cffffffffYou have collected |cff00ff00{} |cffffffffactivity points this week.|r", activity->Points));
+    sWeeklyRewards->PrintActivity(player);
     return true;
 }
 

@@ -74,6 +74,7 @@ public:
     void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
     uint32 GetAchievementPoints(uint64 /*guid*/);
     bool IsCreatureBlacklisted(Creature* /*creature*/);
+    void PrintActivity(Player* /*player*/);
 
     std::vector<WeeklyReward> WeeklyRewards;
     std::unordered_map<uint64, WeeklyActivity> WeeklyActivities;
