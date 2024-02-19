@@ -792,8 +792,6 @@ bool WeeklyRewardsCommandScript::HandleActivityCommand(ChatHandler* handler)
         return false;
     }
 
-    auto guid = player->GetGUID();
-
     sWeeklyRewards->PrintActivity(player);
     return true;
 }
