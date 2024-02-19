@@ -18,6 +18,16 @@
 WeeklyRewards.Enable = 0
 
 #
+#    WeeklyRewards.Debug
+#        Description: Enable/Disable debugging.
+#		 Type:        Bool
+#        Default:     0 - Disabled
+#                     1 - Enabled
+#
+
+WeeklyRewards.Debug = 0
+
+#
 #    WeeklyRewards.Rewards.AchievementPoints.Scaling
 #        Description: Enable/Disable weekly rewards scaling based off achievement points.
 #		 Type:        Bool
