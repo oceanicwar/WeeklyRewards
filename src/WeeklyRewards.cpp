@@ -235,6 +235,7 @@ void WeeklyRewardsWorldScript::OnAfterConfigLoad(bool /*reload*/)
     sWeeklyRewards->LoadWeeklyRewards();
     sWeeklyRewards->LoadWeeklyActivity();
     sWeeklyRewards->LoadBlacklist();
+    sWeeklyRewards->LoadSpecialEncounters();
 }
 
 void WeeklyRewardsEventScript::OnStart(uint16 eventId)
@@ -331,6 +332,8 @@ void WeeklyRewardsHandler::LoadWeeklyActivity()
 
 void WeeklyRewardsHandler::LoadBlacklist()
 {
+    BlacklistCreatures.clear();
+
     //  Naxxramas
     {
         BlacklistCreatures.insert(15929); // Thaddius - Stalagg
@@ -341,6 +344,57 @@ void WeeklyRewardsHandler::LoadBlacklist()
         BlacklistCreatures.insert(16065); // Four Horsemen - Lady Blaumeux
         BlacklistCreatures.insert(16064); // Four Horsemen - Thane Korthazz
     }
+}
+
+void WeeklyRewardsHandler::LoadSpecialEncounters()
+{
+    SpecialEncounters.clear();
+
+    AddSpecialEncounter(INSTANCE_NAXXRAMAS, INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN);
+    AddSpecialEncounter(INSTANCE_MOLTEN_CORE, INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO);
+}
+
+void WeeklyRewardsHandler::AddSpecialEncounter(uint32 instanceId, uint32 encounterId)
+{
+    auto it = SpecialEncounters.find(instanceId);
+    if (it == SpecialEncounters.end())
+    {
+        std::unordered_set<uint32> encounterIds;
+        auto result = SpecialEncounters.emplace(instanceId, std::unordered_set<uint32>());
+
+        if (!result.second)
+        {
+            LOG_WARN("module", "Failed to create special encounter set with instance id '{}'.", instanceId);
+            return;
+        }
+
+        it = result.first;
+    }
+
+    auto encounters = it->second;
+    if (encounters.find(encounterId) != encounters.end())
+    {
+        return;
+    }
+
+    it->second.emplace(encounterId);
+}
+
+bool WeeklyRewardsHandler::IsSpecialEncounter(uint32 instanceId, uint32 encounterId)
+{
+    auto it = SpecialEncounters.find(instanceId);
+    if (it == SpecialEncounters.end())
+    {
+        return false;
+    }
+
+    auto encounters = it->second;
+    if (encounters.find(encounterId) == encounters.end())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void WeeklyRewardsHandler::CreatePlayerActivity(uint64 guid)
@@ -676,36 +730,29 @@ void WeeklyRewardsGlobalScript::OnBeforeSetBossState(uint32 id, EncounterState n
 
     uint32 instanceId = instance->GetId();
 
-    if (instanceId == INSTANCE_NAXXRAMAS ||
-        instanceId == INSTANCE_MOLTEN_CORE)
+    if (sWeeklyRewards->IsSpecialEncounter(instanceId, id) && newState == DONE)
     {
-        if ((id == INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN &&
-            newState == DONE) ||
-            (id == INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO &&
-                newState == DONE))
+        uint32 points = 0;
+
+        if (instance->IsHeroic())
         {
-            uint32 points = 0;
-
-            if (instance->IsHeroic())
-            {
-                points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss", 6);
-            }
-            else
-            {
-                points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
-            }
-
-            instance->DoForAllPlayers([&](Player* player)
-            {
-                if (!player || !player->IsInWorld())
-                {
-                    return;
-                }
-
-                sWeeklyRewards->AddPlayerActivity(player, points,
-                    Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
-            });
+            points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Heroic.Boss", 6);
         }
+        else
+        {
+            points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
+        }
+
+        instance->DoForAllPlayers([&](Player* player)
+        {
+            if (!player || !player->IsInWorld())
+            {
+                return;
+            }
+
+            sWeeklyRewards->AddPlayerActivity(player, points,
+                Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
+        });
     }
 }
 

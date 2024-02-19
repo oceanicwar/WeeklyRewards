@@ -46,11 +46,22 @@ public:
 
         return &instance;
     }
+private:
+    enum WeeklyRewardsHandlerConstants
+    {
+        INSTANCE_NAXXRAMAS = 533,
+        INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN = 12,
 
+        INSTANCE_MOLTEN_CORE = 409,
+        INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO = 8
+    };
 public:
     void LoadWeeklyRewards();
     void LoadWeeklyActivity();
     void LoadBlacklist();
+    void LoadSpecialEncounters();
+    void AddSpecialEncounter(uint32 /*instanceId*/, uint32 /*encounterId*/);
+    bool IsSpecialEncounter(uint32 /*instanceId*/, uint32 /*encounterId*/);
     void CreatePlayerActivity(uint64 /*guid*/);
     void SavePlayerActivity(uint64 /*guid*/);
     WeeklyActivity* GetPlayerActivity(uint64 /*guid*/);
@@ -67,6 +78,7 @@ public:
     std::vector<WeeklyReward> WeeklyRewards;
     std::unordered_map<uint64, WeeklyActivity> WeeklyActivities;
     std::unordered_set<uint32> BlacklistCreatures;
+    std::unordered_map<uint32, std::unordered_set<uint32>> SpecialEncounters;
 };
 
 class WeeklyRewardsPlayerScript : public PlayerScript
@@ -112,16 +124,6 @@ class WeeklyRewardsGlobalScript : public GlobalScript
 {
 public:
     WeeklyRewardsGlobalScript() : GlobalScript("WeeklyRewardsGlobalScript") { }
-
-private:
-    enum WeeklyRewardsGlobalScriptConstants
-    {
-        INSTANCE_NAXXRAMAS = 533,
-        INSTANCE_NAXXRAMAS_BOSS_STATE_HORSEMEN = 12,
-
-        INSTANCE_MOLTEN_CORE = 409,
-        INSTANCE_MOLTEN_CORE_BOSS_STATE_MAJORDOMO = 8
-    };
 private:
     void OnBeforeSetBossState(uint32 /*id*/, EncounterState /*newState*/, EncounterState /*oldState*/, Map* /*instance*/) override;
 };
