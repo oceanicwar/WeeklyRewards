@@ -381,6 +381,11 @@ void WeeklyRewardsHandler::LoadBlacklist()
         BlacklistCreatures.insert(15511); // Trio Bug - Lord Kri
         BlacklistCreatures.insert(15544); // Trio Bug - Vem
     }
+
+    // Karazhan
+    {
+        BlacklistCreatures.insert(16151); // Attumen the Huntsman - Midnight
+    }
 }
 
 void WeeklyRewardsHandler::LoadSpecialEncounters()
