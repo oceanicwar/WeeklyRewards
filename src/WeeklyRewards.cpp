@@ -374,6 +374,13 @@ void WeeklyRewardsHandler::LoadBlacklist()
     {
         BlacklistCreatures.insert(14988); // Bloodlord Mandokir - Ohgan
     }
+
+    // Ahn'Qiraj (40)
+    {
+        BlacklistCreatures.insert(15543); // Trio Bug - Princess Yauj
+        BlacklistCreatures.insert(15511); // Trio Bug - Lord Kri
+        BlacklistCreatures.insert(15544); // Trio Bug - Vem
+    }
 }
 
 void WeeklyRewardsHandler::LoadSpecialEncounters()
