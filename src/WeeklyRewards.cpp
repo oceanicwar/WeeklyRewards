@@ -54,6 +54,11 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
         break;
     }
 
+    if (sConfigMgr->GetOption<bool>("WeeklyRewards.Debug", false))
+    {
+        LOG_INFO("module.weeklyrewards", "Player {} completed quest {} and was rewarded with {} activity points.", player->GetName(), questId, points);
+    }
+
     sWeeklyRewards->AddPlayerActivity(player, points,
         isLFGQuest ?
         Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for completing a LFG dungeon!|r", points) :
@@ -119,6 +124,11 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.Raid.Normal.Boss", 3);
         }
 
+        if (sConfigMgr->GetOption<bool>("WeeklyRewards.Debug", false))
+        {
+            LOG_INFO("module.weeklyrewards", "Player {} killed raid boss {} and was rewarded with {} activity points.", player->GetName(), creatureTemplate->Name, points);
+        }
+
         sWeeklyRewards->AddPlayerActivity(player, points,
             Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a raid boss!|r", points));
 
@@ -151,6 +161,11 @@ void WeeklyRewardsPlayerScript::OnRewardKillRewarder(Player* player, KillRewarde
             points = sConfigMgr->GetOption<uint32>("WeeklyRewards.Rewards.ActivityPoints.RareElite", 4);
         }
 
+        if (sConfigMgr->GetOption<bool>("WeeklyRewards.Debug", false))
+        {
+            LOG_INFO("module.weeklyrewards", "Player {} killed a rare {} and was rewarded with {} activity points.", player->GetName(), creatureTemplate->Name, points);
+        }
+
         sWeeklyRewards->AddPlayerActivity(player, points,
             Acore::StringFormatFmt("|cffffffffYou have earned |cff00ff00{} |cffffffffactivity point(s) for killing a rare!|r", points));
 
@@ -177,6 +192,11 @@ void WeeklyRewardsPlayerScript::OnUpdateGatheringSkill(Player* player, uint32 /*
     if (roll > chance)
     {
         return;
+    }
+
+    if (sConfigMgr->GetOption<bool>("WeeklyRewards.Debug", false))
+    {
+        LOG_INFO("module.weeklyrewards", "Player {} gathered and was rewarded with {} activity points.", player->GetName(), points);
     }
 
     sWeeklyRewards->AddPlayerActivity(player, points,
@@ -348,6 +368,23 @@ void WeeklyRewardsHandler::LoadBlacklist()
         BlacklistCreatures.insert(16063); // Four Horsemen - Sir Zeliek
         BlacklistCreatures.insert(16065); // Four Horsemen - Lady Blaumeux
         BlacklistCreatures.insert(16064); // Four Horsemen - Thane Korthazz
+    }
+
+    // Zul'Gurub
+    {
+        BlacklistCreatures.insert(14988); // Bloodlord Mandokir - Ohgan
+    }
+
+    // Ahn'Qiraj (40)
+    {
+        BlacklistCreatures.insert(15543); // Trio Bug - Princess Yauj
+        BlacklistCreatures.insert(15511); // Trio Bug - Lord Kri
+        BlacklistCreatures.insert(15544); // Trio Bug - Vem
+    }
+
+    // Karazhan
+    {
+        BlacklistCreatures.insert(16151); // Attumen the Huntsman - Midnight
     }
 }
 
