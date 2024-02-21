@@ -357,35 +357,29 @@ void WeeklyRewardsHandler::LoadWeeklyActivity()
 
 void WeeklyRewardsHandler::LoadBlacklist()
 {
+    LOG_INFO("module", "Loading Creature Blacklist from `weekly_activity_creature_blacklist` table..");
+
+    auto qResult = WorldDatabase.Query("SELECT * FROM `weekly_activity_creature_blacklist`");
+
+    if (!qResult)
+    {
+        LOG_WARN("module", "No creatures found in blacklist.");
+        return;
+    }
+
     BlacklistCreatures.clear();
 
-    //  Naxxramas
+    do
     {
-        BlacklistCreatures.insert(15929); // Thaddius - Stalagg
-        BlacklistCreatures.insert(15930); // Thaddius - Feugen
+        auto fields = qResult->Fetch();
 
-        BlacklistCreatures.insert(30549); // Four Horsemen - Baron Rivendare
-        BlacklistCreatures.insert(16063); // Four Horsemen - Sir Zeliek
-        BlacklistCreatures.insert(16065); // Four Horsemen - Lady Blaumeux
-        BlacklistCreatures.insert(16064); // Four Horsemen - Thane Korthazz
-    }
+        auto creature = fields[0].Get<uint32>();
 
-    // Zul'Gurub
-    {
-        BlacklistCreatures.insert(14988); // Bloodlord Mandokir - Ohgan
+        BlacklistCreatures.emplace(creature);
     }
+    while (qResult->NextRow());
 
-    // Ahn'Qiraj (40)
-    {
-        BlacklistCreatures.insert(15543); // Trio Bug - Princess Yauj
-        BlacklistCreatures.insert(15511); // Trio Bug - Lord Kri
-        BlacklistCreatures.insert(15544); // Trio Bug - Vem
-    }
-
-    // Karazhan
-    {
-        BlacklistCreatures.insert(16151); // Attumen the Huntsman - Midnight
-    }
+    LOG_INFO("module", ">> Loaded '{}' creatures into blacklist.", BlacklistCreatures.size());
 }
 
 void WeeklyRewardsHandler::LoadSpecialEncounters()
