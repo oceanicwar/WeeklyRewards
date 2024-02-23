@@ -54,6 +54,18 @@ void WeeklyRewardsPlayerScript::OnPlayerCompleteQuest(Player* player, Quest cons
         break;
     }
 
+    // Patch exploitable repeatable quests like cloth hand in, since it is not a daily/weekly.
+    if (!isLFGQuest)
+    {
+        bool isRepeatable = quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_REPEATABLE);
+        bool isDailyOrWeekly = (quest->HasFlag(QUEST_FLAGS_DAILY) || quest->HasFlag(QUEST_FLAGS_WEEKLY));
+
+        if (isRepeatable && !isDailyOrWeekly)
+        {
+            return;
+        }
+    }
+
     if (sConfigMgr->GetOption<bool>("WeeklyRewards.Debug", false))
     {
         LOG_INFO("module.weeklyrewards", "Player {} completed quest {} and was rewarded with {} activity points.", player->GetName(), questId, points);
