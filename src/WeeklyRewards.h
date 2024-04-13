@@ -69,7 +69,7 @@ public:
     void AddPlayerActivity(Player* /*player*/, uint32 /*newPoints*/, std::string msg = "");
     void SendWeeklyRewards(uint64 /*guid*/, uint32 /*points*/);
     void FlushWeeklyRewards();
-    void ResetWeeklyActivity(uint64 /*guid*/);
+    void ResetWeeklyActivity(WeeklyActivity* /*activity*/);
     bool CanSendWeeklyRewards();
     void SendMailItems(uint64 /*guid*/, std::vector<std::pair<uint32, uint32>>& /*items*/, std::string /*subject*/, std::string /*body*/);
     uint32 GetAchievementPoints(uint64 /*guid*/);

@@ -767,7 +767,7 @@ void WeeklyRewardsHandler::FlushWeeklyRewards()
     LOG_INFO("module", "Flushing weekly rewards..");
 
     uint32 count = 0;
-    for (auto entry : WeeklyActivities)
+    for (auto& entry : WeeklyActivities)
     {
         auto activity = entry.second;
         if (activity.Points < 1)
@@ -776,7 +776,9 @@ void WeeklyRewardsHandler::FlushWeeklyRewards()
         }
 
         sWeeklyRewards->SendWeeklyRewards(activity.Guid, activity.Points);
-        sWeeklyRewards->ResetWeeklyActivity(activity.Guid);
+        sWeeklyRewards->ResetWeeklyActivity(&entry.second);
+
+        SavePlayerActivity(activity.Guid);
 
         count++;
     }
@@ -784,15 +786,9 @@ void WeeklyRewardsHandler::FlushWeeklyRewards()
     LOG_INFO("module", ">> Finished flushing '{}' weekly rewards.", count);
 }
 
-void WeeklyRewardsHandler::ResetWeeklyActivity(uint64 guid)
+void WeeklyRewardsHandler::ResetWeeklyActivity(WeeklyActivity* activity)
 {
-    auto it = WeeklyActivities.find(guid);
-    if (it == WeeklyActivities.end())
-    {
-        return;
-    }
-
-    it->second.Points = 0;
+    activity->Points = 0;
 }
 
 bool WeeklyRewardsHandler::CanSendWeeklyRewards()
